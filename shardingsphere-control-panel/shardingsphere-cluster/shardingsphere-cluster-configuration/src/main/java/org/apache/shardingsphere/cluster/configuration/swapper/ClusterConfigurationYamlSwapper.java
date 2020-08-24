@@ -29,32 +29,32 @@ import org.apache.shardingsphere.infra.yaml.swapper.YamlSwapper;
 public final class ClusterConfigurationYamlSwapper implements YamlSwapper<YamlClusterConfiguration, ClusterConfiguration> {
     
     @Override
-    public YamlClusterConfiguration swapToYamlConfiguration(final ClusterConfiguration clusterConfiguration) {
-        final YamlClusterConfiguration yamlClusterConfiguration = new YamlClusterConfiguration();
-        final YamlHeartbeatConfiguration yamlHeartBeatConfiguration = new YamlHeartbeatConfiguration();
-        HeartbeatConfiguration heartbeat = clusterConfiguration.getHeartbeat();
+    public YamlClusterConfiguration swapToYamlConfiguration(final ClusterConfiguration data) {
+        YamlHeartbeatConfiguration yamlHeartBeatConfiguration = new YamlHeartbeatConfiguration();
+        HeartbeatConfiguration heartbeat = data.getHeartbeat();
         yamlHeartBeatConfiguration.setSql(heartbeat.getSql());
         yamlHeartBeatConfiguration.setInterval(heartbeat.getInterval());
         yamlHeartBeatConfiguration.setRetryEnable(heartbeat.isRetryEnable());
         yamlHeartBeatConfiguration.setRetryMaximum(heartbeat.getRetryMaximum());
         yamlHeartBeatConfiguration.setRetryInterval(heartbeat.getRetryInterval());
         yamlHeartBeatConfiguration.setThreadCount(heartbeat.getThreadCount());
-        yamlClusterConfiguration.setHeartbeat(yamlHeartBeatConfiguration);
-        return yamlClusterConfiguration;
+        YamlClusterConfiguration result = new YamlClusterConfiguration();
+        result.setHeartbeat(yamlHeartBeatConfiguration);
+        return result;
     }
     
     @Override
-    public ClusterConfiguration swapToObject(final YamlClusterConfiguration yamlConfiguration) {
-        final ClusterConfiguration clusterConfiguration = new ClusterConfiguration();
-        final HeartbeatConfiguration heartBeatConfiguration = new HeartbeatConfiguration();
-        YamlHeartbeatConfiguration heartbeat = yamlConfiguration.getHeartbeat();
+    public ClusterConfiguration swapToObject(final YamlClusterConfiguration yamlConfig) {
+        HeartbeatConfiguration heartBeatConfiguration = new HeartbeatConfiguration();
+        YamlHeartbeatConfiguration heartbeat = yamlConfig.getHeartbeat();
         heartBeatConfiguration.setSql(heartbeat.getSql());
         heartBeatConfiguration.setInterval(heartbeat.getInterval());
         heartBeatConfiguration.setRetryEnable(heartbeat.isRetryEnable());
         heartBeatConfiguration.setRetryMaximum(heartbeat.getRetryMaximum());
         heartBeatConfiguration.setRetryInterval(heartbeat.getRetryInterval());
-        heartBeatConfiguration.setThreadCount(null == heartbeat.getThreadCount() ? Runtime.getRuntime().availableProcessors() << 1 : heartbeat.getThreadCount());
-        clusterConfiguration.setHeartbeat(heartBeatConfiguration);
-        return clusterConfiguration;
+        heartBeatConfiguration.setThreadCount(0 == heartbeat.getThreadCount() ? Runtime.getRuntime().availableProcessors() << 1 : heartbeat.getThreadCount());
+        ClusterConfiguration result = new ClusterConfiguration();
+        result.setHeartbeat(heartBeatConfiguration);
+        return result;
     }
 }

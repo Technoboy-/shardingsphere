@@ -24,24 +24,25 @@ import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.infra.yaml.config.YamlRootRuleConfigurations;
 import org.apache.shardingsphere.infra.yaml.engine.YamlEngine;
 import org.apache.shardingsphere.infra.yaml.swapper.YamlRuleConfigurationSwapperEngine;
-import org.apache.shardingsphere.orchestration.repository.api.ConfigCenterRepository;
-import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
-import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.apache.shardingsphere.orchestration.core.common.event.DataSourceChangedEvent;
-import org.apache.shardingsphere.orchestration.core.common.event.IgnoredShardingOrchestrationEvent;
+import org.apache.shardingsphere.orchestration.core.common.event.IgnoredOrchestrationEvent;
+import org.apache.shardingsphere.orchestration.core.common.event.OrchestrationEvent;
 import org.apache.shardingsphere.orchestration.core.common.event.RuleConfigurationsChangedEvent;
 import org.apache.shardingsphere.orchestration.core.common.event.SchemaAddedEvent;
 import org.apache.shardingsphere.orchestration.core.common.event.SchemaDeletedEvent;
-import org.apache.shardingsphere.orchestration.core.common.event.ShardingOrchestrationEvent;
-import org.apache.shardingsphere.orchestration.core.common.listener.PostShardingCenterRepositoryEventListener;
+import org.apache.shardingsphere.orchestration.core.common.listener.PostOrchestrationRepositoryEventListener;
+import org.apache.shardingsphere.orchestration.core.common.yaml.config.YamlDataSourceConfiguration;
+import org.apache.shardingsphere.orchestration.core.common.yaml.swapper.DataSourceConfigurationYamlSwapper;
 import org.apache.shardingsphere.orchestration.core.config.ConfigCenter;
 import org.apache.shardingsphere.orchestration.core.config.ConfigCenterNode;
-import org.apache.shardingsphere.orchestration.core.common.configuration.DataSourceConfigurationYamlSwapper;
-import org.apache.shardingsphere.orchestration.core.common.configuration.YamlDataSourceConfiguration;
+import org.apache.shardingsphere.orchestration.repository.api.ConfigurationRepository;
+import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
+import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -50,29 +51,33 @@ import java.util.stream.Collectors;
 /**
  * Schema changed listener.
  */
-public final class SchemaChangedListener extends PostShardingCenterRepositoryEventListener {
+public final class SchemaChangedListener extends PostOrchestrationRepositoryEventListener {
     
     private final ConfigCenter configurationService;
     
     private final ConfigCenterNode configurationNode;
     
-    private final Collection<String> existedSchemaNames = new LinkedList<>();
+    private final Collection<String> existedSchemaNames = new LinkedHashSet<>();
     
-    public SchemaChangedListener(final String name, final ConfigCenterRepository configCenterRepository, final Collection<String> shardingSchemaNames) {
-        super(configCenterRepository, new ConfigCenterNode(name).getAllSchemaConfigPaths(shardingSchemaNames));
-        configurationService = new ConfigCenter(name, configCenterRepository);
+    public SchemaChangedListener(final String name, final ConfigurationRepository configurationRepository, final Collection<String> schemaNames) {
+        super(configurationRepository, new ConfigCenterNode(name).getAllSchemaConfigPaths(schemaNames));
+        configurationService = new ConfigCenter(name, configurationRepository);
         configurationNode = new ConfigCenterNode(name);
-        existedSchemaNames.addAll(shardingSchemaNames);
+        existedSchemaNames.addAll(schemaNames);
     }
     
     @Override
-    protected ShardingOrchestrationEvent createShardingOrchestrationEvent(final DataChangedEvent event) {
+    protected OrchestrationEvent createOrchestrationEvent(final DataChangedEvent event) {
+        // TODO Consider removing the following one.
         if (configurationNode.getSchemaPath().equals(event.getKey())) {
             return createSchemaNamesUpdatedEvent(event.getValue());
         }
         String shardingSchemaName = configurationNode.getSchemaName(event.getKey());
         if (Strings.isNullOrEmpty(shardingSchemaName) || !isValidNodeChangedEvent(shardingSchemaName, event.getKey())) {
-            return new IgnoredShardingOrchestrationEvent();
+            return new IgnoredOrchestrationEvent();
+        }
+        if (ChangedType.ADDED == event.getChangedType()) {
+            return createAddedEvent(shardingSchemaName);
         }
         if (ChangedType.UPDATED == event.getChangedType()) {
             return createUpdatedEvent(shardingSchemaName, event);
@@ -80,36 +85,46 @@ public final class SchemaChangedListener extends PostShardingCenterRepositoryEve
         if (ChangedType.DELETED == event.getChangedType()) {
             return createDeletedEvent(shardingSchemaName);
         }
-        return new IgnoredShardingOrchestrationEvent();
+        return new IgnoredOrchestrationEvent();
     }
     
-    private ShardingOrchestrationEvent createSchemaNamesUpdatedEvent(final String shardingSchemaNames) {
-        Collection<String> persistShardingSchemaNames = configurationNode.splitShardingSchemaName(shardingSchemaNames);
+    private OrchestrationEvent createSchemaNamesUpdatedEvent(final String shardingSchemaNames) {
+        Collection<String> persistShardingSchemaNames = configurationNode.splitSchemaName(shardingSchemaNames);
         Set<String> addedSchemaNames = SetUtils.difference(new HashSet<>(persistShardingSchemaNames), new HashSet<>(existedSchemaNames));
         if (!addedSchemaNames.isEmpty()) {
-            return createUpdatedEventForNewSchema(addedSchemaNames.iterator().next());
+            return createAddedEvent(addedSchemaNames.iterator().next());
         }
         Set<String> deletedSchemaNames = SetUtils.difference(new HashSet<>(existedSchemaNames), new HashSet<>(persistShardingSchemaNames));
         if (!deletedSchemaNames.isEmpty()) {
             return createDeletedEvent(deletedSchemaNames.iterator().next());
         }
-        return new IgnoredShardingOrchestrationEvent();
+        return new IgnoredOrchestrationEvent();
     }
     
     private boolean isValidNodeChangedEvent(final String shardingSchemaName, final String nodeFullPath) {
-        return configurationNode.getDataSourcePath(shardingSchemaName).equals(nodeFullPath) || configurationNode.getRulePath(shardingSchemaName).equals(nodeFullPath);
+        return !existedSchemaNames.contains(shardingSchemaName)
+                || configurationNode.getDataSourcePath(shardingSchemaName).equals(nodeFullPath) || configurationNode.getRulePath(shardingSchemaName).equals(nodeFullPath);
     }
     
-    private ShardingOrchestrationEvent createUpdatedEvent(final String shardingSchemaName, final DataChangedEvent event) {
-        return existedSchemaNames.contains(shardingSchemaName) ? createUpdatedEventForExistedSchema(event, shardingSchemaName) : createUpdatedEventForNewSchema(shardingSchemaName);
+    private OrchestrationEvent createAddedEvent(final String shardingSchemaName) {
+        existedSchemaNames.add(shardingSchemaName);
+        if (!isOwnCompleteConfigurations(shardingSchemaName)) {
+            return new SchemaAddedEvent(shardingSchemaName, Collections.emptyMap(), Collections.emptyList());
+        }
+        return new SchemaAddedEvent(shardingSchemaName, configurationService.loadDataSourceConfigurations(shardingSchemaName), createRuleConfigurations(shardingSchemaName));
     }
     
-    private ShardingOrchestrationEvent createUpdatedEventForExistedSchema(final DataChangedEvent event, final String shardingSchemaName) {
+    private OrchestrationEvent createUpdatedEvent(final String shardingSchemaName, final DataChangedEvent event) {
+        // TODO Consider remove judgement.
+        return existedSchemaNames.contains(shardingSchemaName) ? createUpdatedEventForExistedSchema(event, shardingSchemaName) : createAddedEvent(shardingSchemaName);
+    }
+    
+    private OrchestrationEvent createUpdatedEventForExistedSchema(final DataChangedEvent event, final String shardingSchemaName) {
         return event.getKey().equals(configurationNode.getDataSourcePath(shardingSchemaName))
                 ? createDataSourceChangedEvent(shardingSchemaName, event) : createRuleChangedEvent(shardingSchemaName, event);
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private DataSourceChangedEvent createDataSourceChangedEvent(final String shardingSchemaName, final DataChangedEvent event) {
         Map<String, YamlDataSourceConfiguration> dataSourceConfigurations = (Map) YamlEngine.unmarshal(event.getValue());
         Preconditions.checkState(null != dataSourceConfigurations && !dataSourceConfigurations.isEmpty(), "No available data sources to load for orchestration.");
@@ -117,31 +132,22 @@ public final class SchemaChangedListener extends PostShardingCenterRepositoryEve
                 .collect(Collectors.toMap(Entry::getKey, entry -> new DataSourceConfigurationYamlSwapper().swapToObject(entry.getValue()))));
     }
     
-    private ShardingOrchestrationEvent createRuleChangedEvent(final String shardingSchemaName, final DataChangedEvent event) {
+    private OrchestrationEvent createRuleChangedEvent(final String shardingSchemaName, final DataChangedEvent event) {
         YamlRootRuleConfigurations configurations = YamlEngine.unmarshal(event.getValue(), YamlRootRuleConfigurations.class);
         Preconditions.checkState(null != configurations, "No available rule to load for orchestration.");
         return new RuleConfigurationsChangedEvent(
                 shardingSchemaName, new YamlRuleConfigurationSwapperEngine().swapToRuleConfigurations(configurations.getRules()));
     }
     
-    private ShardingOrchestrationEvent createUpdatedEventForNewSchema(final String shardingSchemaName) {
-        return isOwnCompleteConfigurations(shardingSchemaName) ? createSchemaAddedEvent(shardingSchemaName) : new IgnoredShardingOrchestrationEvent();
-    }
-    
     private boolean isOwnCompleteConfigurations(final String shardingSchemaName) {
         return configurationService.hasDataSourceConfiguration(shardingSchemaName) && configurationService.hasRuleConfiguration(shardingSchemaName);
-    }
-    
-    private SchemaAddedEvent createSchemaAddedEvent(final String shardingSchemaName) {
-        existedSchemaNames.add(shardingSchemaName);
-        return new SchemaAddedEvent(shardingSchemaName, configurationService.loadDataSourceConfigurations(shardingSchemaName), createRuleConfigurations(shardingSchemaName));
     }
     
     private Collection<RuleConfiguration> createRuleConfigurations(final String shardingSchemaName) {
         return configurationService.loadRuleConfigurations(shardingSchemaName);
     }
     
-    private ShardingOrchestrationEvent createDeletedEvent(final String shardingSchemaName) {
+    private OrchestrationEvent createDeletedEvent(final String shardingSchemaName) {
         existedSchemaNames.remove(shardingSchemaName);
         return new SchemaDeletedEvent(shardingSchemaName);
     }

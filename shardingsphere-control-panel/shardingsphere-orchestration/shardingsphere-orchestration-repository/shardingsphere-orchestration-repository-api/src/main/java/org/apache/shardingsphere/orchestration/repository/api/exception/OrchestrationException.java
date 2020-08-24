@@ -18,15 +18,11 @@
 package org.apache.shardingsphere.orchestration.repository.api.exception;
 
 /**
- * Config center exception.
+ * Orchestration exception.
  */
 public final class OrchestrationException extends RuntimeException {
     
     private static final long serialVersionUID = -6417179023552012152L;
-    
-    public OrchestrationException(final String errorMessage, final Object... args) {
-        super(String.format(errorMessage, args));
-    }
     
     public OrchestrationException(final Exception cause) {
         super(cause);

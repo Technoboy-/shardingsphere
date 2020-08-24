@@ -23,8 +23,9 @@ import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
 import org.apache.shardingsphere.cluster.state.enums.NodeState;
 import org.apache.shardingsphere.infra.yaml.engine.YamlEngine;
-import org.apache.shardingsphere.orchestration.core.common.eventbus.ShardingOrchestrationEventBus;
-import org.apache.shardingsphere.orchestration.core.facade.ShardingOrchestrationFacade;
+import org.apache.shardingsphere.orchestration.core.common.eventbus.OrchestrationEventBus;
+import org.apache.shardingsphere.orchestration.core.facade.OrchestrationFacade;
+import org.apache.shardingsphere.orchestration.core.registry.RegistryCenter;
 import org.apache.shardingsphere.orchestration.core.registry.event.DisabledStateChangedEvent;
 
 /**
@@ -32,8 +33,10 @@ import org.apache.shardingsphere.orchestration.core.registry.event.DisabledState
  */
 public final class ClusterStateInstance {
     
+    private RegistryCenter registryCenter = OrchestrationFacade.getInstance().getRegistryCenter();
+    
     private ClusterStateInstance() {
-        ShardingOrchestrationEventBus.getInstance().register(this);
+        OrchestrationEventBus.getInstance().register(this);
     }
     
     /**
@@ -52,7 +55,7 @@ public final class ClusterStateInstance {
      */
     public void persistInstanceState(final InstanceState instanceState) {
         Preconditions.checkNotNull(instanceState, "instance state can not be null.");
-        ShardingOrchestrationFacade.getInstance().getRegistryCenter().persistInstanceData(YamlEngine.marshal(instanceState));
+        registryCenter.persistInstanceData(YamlEngine.marshal(instanceState));
     }
     
     /**
@@ -61,7 +64,7 @@ public final class ClusterStateInstance {
      * @return instance state
      */
     public InstanceState loadInstanceState() {
-        String instanceData = ShardingOrchestrationFacade.getInstance().getRegistryCenter().loadInstanceData();
+        String instanceData = registryCenter.loadInstanceData();
         Preconditions.checkState(!Strings.isNullOrEmpty(instanceData), "Can not load instance state from registry center");
         return YamlEngine.unmarshal(instanceData, InstanceState.class);
     }

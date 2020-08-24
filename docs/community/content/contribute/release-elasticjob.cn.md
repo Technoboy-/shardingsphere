@@ -87,7 +87,7 @@ mvn release:prepare -Prelease -Darguments="-DskipTests" -DautoVersionSubmodules=
 将本地文件检查无误后，提交至github。
 
 ```shell
-git push
+git push origin ${RELEASE.VERSION}-release
 git push origin --tags
 ```
 
@@ -144,16 +144,19 @@ cp -f ~/elasticjob/elasticjob-distribution/elasticjob-src-distribution/target/*.
 cp -f ~/elasticjob/elasticjob-distribution/elasticjob-src-distribution/target/*.zip.asc ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
 cp -f ~/elasticjob/elasticjob-distribution/elasticjob-lite-distribution/target/*.tar.gz ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
 cp -f ~/elasticjob/elasticjob-distribution/elasticjob-lite-distribution/target/*.tar.gz.asc ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
-cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-distribution/target/*.tar.gz ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
-cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-distribution/target/*.tar.gz.asc ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
+cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-executor-distribution/target/*.tar.gz ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
+cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-executor-distribution/target/*.tar.gz.asc ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
+cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-scheduler-distribution/target/*.tar.gz ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
+cp -f ~/elasticjob/elasticjob-distribution/elasticjob-cloud-scheduler-distribution/target/*.tar.gz.asc ~/ss_svn/dev/shardingsphere/elasticjob-${RELEASE.VERSION}
 ```
 
 ### 生成文件签名
 
 ```shell
 shasum -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src.zip >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src.zip.sha512
-shasum -b -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz.sha512
-shasum -b -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz.sha512
+shasum -b -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz.sha512
+shasum -b -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz.sha512
+shasum -b -a 512 apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz >> apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz.sha512
 ```
 
 ### 提交Apache SVN
@@ -169,8 +172,9 @@ svn --username=${APACHE LDAP 用户名} commit -m "release elasticjob-${RELEASE.
 
 ```shell
 shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src.zip.sha512
-shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz.sha512
-shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz.sha512
+shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz.sha512
+shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz.sha512
+shasum -c apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz.sha512
 ```
 
 ### 检查gpg签名
@@ -202,8 +206,9 @@ Your decision? 5
 
 ```shell
 gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src.zip.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src.zip
-gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz
-gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz
+gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz
+gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz
+gpg --verify apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz.asc apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz
 ```
 
 ### 检查发布文件内容
@@ -229,7 +234,8 @@ diff -r apache-shardingsphere-elasticjob-${RELEASE.VERSION}-src-release sharding
 
 #### 检查二进制包的文件内容
 
-解压缩`apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-lite-bin.tar.gz`和`apache-shardingsphere-elasticjob-${RELEASE.VERSION}-elasticjob-cloud-bin.tar.gz`
+解压缩`apache-shardingsphere-elasticjob-${RELEASE.VERSION}-lite-bin.tar.gz`，`apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-executor-bin.tar.gz`
+和`apache-shardingsphere-elasticjob-${RELEASE.VERSION}-cloud-scheduler-bin.tar.gz`
 进行如下检查:
 
 - 存在`LICENSE`和`NOTICE`文件
@@ -320,29 +326,6 @@ Checklist for reference:
 
 2. 宣布投票结果模板：
 
-正文：
-
-```
-The vote to release Apache ShardingSphere ElasticJob-${RELEASE.VERSION} has passed.
-
-7 PMC member +1 binding votes:
-
-xxx
-xxx
-xxx
-xxx
-xxx
-xxx
-xxx
-
-1 community +1 non-binding vote:
-xxx
-
-Thank you everyone for taking the time to review the release and help us. 
-```
-
-3. 宣布投票结果模板：
-
 标题：
 
 ```
@@ -381,8 +364,10 @@ svn cp https://dist.apache.org/repos/dist/dev/shardingsphere/KEYS https://dist.a
 ```shell
 git checkout master
 git merge origin/${RELEASE.VERSION}-release
-git push
+git pull
+git push origin master
 git push --delete origin ${RELEASE.VERSION}-release
+git branch -d ${RELEASE.VERSION}-release
 ```
 
 ### 更新下载页面
@@ -394,6 +379,40 @@ https://shardingsphere.apache.org/elasticjob/current/cn/downloads/
 GPG签名文件和哈希校验文件的下载连接应该使用这个前缀： `https://downloads.apache.org/shardingsphere/`
 
 `最新版本`中保留一个最新的版本。
+
+### 发布Docker
+
+#### 准备工作
+
+本地安装Docker，并将Docker服务启动起来
+
+#### 编译Docker镜像
+
+```shell
+git checkout ${RELEASE.VERSION}
+cd ~/elasticjob/elasticjob-distribution/elasticjob-cloud-scheduler-distribution/
+mvn clean package -Prelease,docker
+```
+
+#### 给本地Docker镜像打标记
+
+通过`docker images`查看到IMAGE ID，例如为：e9ea51023687
+
+```shell
+docker tag e9ea51023687 apache/shardingsphere-elasticjob-cloud-scheduler:latest
+docker tag e9ea51023687 apache/shardingsphere-elasticjob-cloud-scheduler:${RELEASE.VERSION}
+```
+
+#### 发布Docker镜像
+
+```shell
+docker push apache/shardingsphere-elasticjob-cloud-scheduler:latest
+docker push apache/shardingsphere-elasticjob-cloud-scheduler:${RELEASE_VERSION}
+```
+
+#### 确认发布成功
+
+登录[Docker Hub](https://hub.docker.com/r/apache/shardingsphere-elasticjob-cloud-scheduler/)查看是否有发布的镜像
 
 ### GitHub版本发布
 

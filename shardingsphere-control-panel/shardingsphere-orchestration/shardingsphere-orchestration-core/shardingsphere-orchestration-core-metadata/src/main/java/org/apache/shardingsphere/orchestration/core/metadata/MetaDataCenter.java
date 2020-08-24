@@ -19,7 +19,7 @@ package org.apache.shardingsphere.orchestration.core.metadata;
 
 import com.google.common.base.Strings;
 import org.apache.shardingsphere.infra.callback.orchestration.MetaDataCallback;
-import org.apache.shardingsphere.orchestration.repository.api.CenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.OrchestrationRepository;
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.RuleSchemaMetaDataYamlSwapper;
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.YamlRuleSchemaMetaData;
 import org.apache.shardingsphere.infra.metadata.schema.RuleSchemaMetaData;
@@ -28,17 +28,17 @@ import org.apache.shardingsphere.infra.yaml.engine.YamlEngine;
 import java.util.Optional;
 
 /**
- * Read/Write meta data from center repository.
+ * Meta data center.
  */
 public final class MetaDataCenter {
     
     private final MetaDataCenterNode node;
     
-    private final CenterRepository repository;
+    private final OrchestrationRepository repository;
     
-    public MetaDataCenter(final String name, final CenterRepository centerRepository) {
-        this.node = new MetaDataCenterNode(name);
-        this.repository = centerRepository;
+    public MetaDataCenter(final String name, final OrchestrationRepository orchestrationRepository) {
+        node = new MetaDataCenterNode(name);
+        repository = orchestrationRepository;
         MetaDataCallback.getInstance().register(this::persistMetaDataCenterNode);
     }
     

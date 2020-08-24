@@ -24,6 +24,7 @@ import org.apache.shardingsphere.driver.jdbc.core.datasource.ShardingSphereDataS
 import org.apache.shardingsphere.driver.orchestration.internal.datasource.OrchestrationShardingSphereDataSource;
 import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.infra.database.DefaultSchema;
+import org.apache.shardingsphere.metrics.configuration.config.MetricsConfiguration;
 import org.apache.shardingsphere.orchestration.repository.api.config.OrchestrationConfiguration;
 
 import javax.sql.DataSource;
@@ -40,13 +41,13 @@ import java.util.Properties;
 public final class OrchestrationShardingSphereDataSourceFactory {
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param dataSourceMap data source map
      * @param ruleConfigurations rule configurations
      * @param orchestrationConfig orchestration configuration
      * @param props properties for data source
-     * @return sharding data source
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
     public static DataSource createDataSource(final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> ruleConfigurations,
@@ -59,13 +60,13 @@ public final class OrchestrationShardingSphereDataSourceFactory {
     }
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param dataSource data source
      * @param ruleConfigurations rule configurations
      * @param orchestrationConfig orchestration configuration
      * @param props properties for data source
-     * @return sharding data source
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
     public static DataSource createDataSource(final DataSource dataSource, final Collection<RuleConfiguration> ruleConfigurations,
@@ -76,10 +77,10 @@ public final class OrchestrationShardingSphereDataSourceFactory {
     }
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param orchestrationConfig orchestration configuration
-     * @return sharding data source
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
     public static DataSource createDataSource(final OrchestrationConfiguration orchestrationConfig) throws SQLException {
@@ -87,52 +88,58 @@ public final class OrchestrationShardingSphereDataSourceFactory {
     }
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param dataSourceMap data source map
      * @param ruleConfigurations rule configurations
      * @param orchestrationConfig orchestration configuration
      * @param props properties for data source
      * @param clusterConfiguration cluster configuration
-     * @return sharding data source
+     * @param metricsConfiguration metrics configuration
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
     public static DataSource createDataSource(final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> ruleConfigurations,
-                                              final Properties props, final OrchestrationConfiguration orchestrationConfig, final ClusterConfiguration clusterConfiguration) throws SQLException {
+                                              final Properties props, final OrchestrationConfiguration orchestrationConfig,
+                                              final ClusterConfiguration clusterConfiguration, final MetricsConfiguration metricsConfiguration) throws SQLException {
         if (null == ruleConfigurations || ruleConfigurations.isEmpty()) {
-            return createDataSource(orchestrationConfig, clusterConfiguration);
+            return createDataSource(orchestrationConfig, clusterConfiguration, metricsConfiguration);
         }
         ShardingSphereDataSource shardingSphereDataSource = new ShardingSphereDataSource(dataSourceMap, ruleConfigurations, props);
-        return new OrchestrationShardingSphereDataSource(shardingSphereDataSource, orchestrationConfig, clusterConfiguration);
+        return new OrchestrationShardingSphereDataSource(shardingSphereDataSource, orchestrationConfig, clusterConfiguration, metricsConfiguration);
     }
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param dataSource data source
      * @param ruleConfigurations rule configurations
      * @param orchestrationConfig orchestration configuration
      * @param props properties for data source
      * @param clusterConfiguration cluster configuration
-     * @return sharding data source
+     * @param metricsConfiguration metrics configuration
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
     public static DataSource createDataSource(final DataSource dataSource, final Collection<RuleConfiguration> ruleConfigurations,
-                                              final Properties props, final OrchestrationConfiguration orchestrationConfig, final ClusterConfiguration clusterConfiguration) throws SQLException {
+                                              final Properties props, final OrchestrationConfiguration orchestrationConfig,
+                                              final ClusterConfiguration clusterConfiguration, final MetricsConfiguration metricsConfiguration) throws SQLException {
         Map<String, DataSource> dataSourceMap = new HashMap<>(1, 1);
         dataSourceMap.put(DefaultSchema.LOGIC_NAME, dataSource);
-        return createDataSource(dataSourceMap, ruleConfigurations, props, orchestrationConfig, clusterConfiguration);
+        return createDataSource(dataSourceMap, ruleConfigurations, props, orchestrationConfig, clusterConfiguration, metricsConfiguration);
     }
     
     /**
-     * Create sharding data source.
+     * Create ShardingSphere data source.
      *
      * @param orchestrationConfig orchestration configuration
      * @param clusterConfiguration cluster configuration
-     * @return sharding data source
+     * @param metricsConfiguration metrics configuration
+     * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final OrchestrationConfiguration orchestrationConfig, final ClusterConfiguration clusterConfiguration) throws SQLException {
-        return new OrchestrationShardingSphereDataSource(orchestrationConfig, clusterConfiguration);
+    public static DataSource createDataSource(final OrchestrationConfiguration orchestrationConfig,
+                                              final ClusterConfiguration clusterConfiguration, final MetricsConfiguration metricsConfiguration) throws SQLException {
+        return new OrchestrationShardingSphereDataSource(orchestrationConfig, clusterConfiguration, metricsConfiguration);
     }
 }

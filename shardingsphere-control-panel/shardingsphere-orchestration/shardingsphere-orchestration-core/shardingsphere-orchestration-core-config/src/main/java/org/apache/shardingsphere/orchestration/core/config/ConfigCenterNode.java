@@ -20,17 +20,16 @@ package org.apache.shardingsphere.orchestration.core.config;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import lombok.RequiredArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.RequiredArgsConstructor;
-import org.apache.shardingsphere.infra.constant.Constants;
-import org.apache.shardingsphere.orchestration.core.common.utils.IpUtils;
 
 /**
- * Configuration node.
+ * Config center node.
  */
 @RequiredArgsConstructor
 public final class ConfigCenterNode {
@@ -135,13 +134,13 @@ public final class ConfigCenterNode {
     }
     
     /**
-     * Split sharding schema name.
+     * Split schema name.
      * 
-     * @param shardingSchemaNames sharding schema names
-     * @return sharding schema names
+     * @param schemaNames schema names
+     * @return schema names
      */
-    public Collection<String> splitShardingSchemaName(final String shardingSchemaNames) {
-        return Strings.isNullOrEmpty(shardingSchemaNames) ? Collections.emptyList() : Splitter.on(COMMA_SEPARATOR).splitToList(shardingSchemaNames);
+    public Collection<String> splitSchemaName(final String schemaNames) {
+        return Strings.isNullOrEmpty(schemaNames) ? Collections.emptyList() : Splitter.on(COMMA_SEPARATOR).splitToList(schemaNames);
     }
     
     /**
@@ -175,7 +174,6 @@ public final class ConfigCenterNode {
      * @return metrics node path
      */
     public String getMetricsPath() {
-        String path = String.join(":", IpUtils.getIp(), System.getProperty(Constants.PORT_KEY, String.valueOf(Constants.DEFAULT_PORT)));
-        return Joiner.on(PATH_SEPARATOR).join("", name, ROOT, METRICS_NODE, path);
+        return getFullPath(METRICS_NODE);
     }
 }

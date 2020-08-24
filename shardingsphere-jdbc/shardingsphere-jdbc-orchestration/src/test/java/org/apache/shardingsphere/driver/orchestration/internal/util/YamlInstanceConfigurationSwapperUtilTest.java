@@ -17,39 +17,39 @@
 
 package org.apache.shardingsphere.driver.orchestration.internal.util;
 
-import org.apache.shardingsphere.orchestration.core.common.CenterType;
-import org.apache.shardingsphere.orchestration.repository.api.config.CenterConfiguration;
-import org.apache.shardingsphere.orchestration.repository.common.configuration.config.YamlCenterRepositoryConfiguration;
+import org.apache.shardingsphere.orchestration.repository.api.config.OrchestrationCenterConfiguration;
+import org.apache.shardingsphere.orchestration.core.common.yaml.config.YamlOrchestrationCenterConfiguration;
+import org.apache.shardingsphere.orchestration.core.common.yaml.config.YamlOrchestrationConfiguration;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public final class YamlInstanceConfigurationSwapperUtilTest {
     
     @Test
     public void marshal() {
-        YamlCenterRepositoryConfiguration yamlCenterRepositoryConfiguration = getYamlInstanceConfiguration();
-        Map<String, YamlCenterRepositoryConfiguration> yamlConfigurationMap = Collections.singletonMap("test", yamlCenterRepositoryConfiguration);
-        Map<String, CenterConfiguration> configurationMap = YamlCenterRepositoryConfigurationSwapperUtil.marshal(yamlConfigurationMap);
-        CenterConfiguration configuration = configurationMap.get("test");
-        assertEquals(configuration.getType(), yamlCenterRepositoryConfiguration.getInstanceType());
-        assertEquals(configuration.getOrchestrationType(), yamlCenterRepositoryConfiguration.getOrchestrationType());
-        assertEquals(configuration.getNamespace(), yamlCenterRepositoryConfiguration.getNamespace());
-        assertEquals(configuration.getServerLists(), yamlCenterRepositoryConfiguration.getServerLists());
-        assertEquals(configuration.getProps(), yamlCenterRepositoryConfiguration.getProps());
+        YamlOrchestrationConfiguration expected = createExpectedYamlOrchestrationConfiguration();
+        OrchestrationCenterConfiguration actual = YamlOrchestrationRepositoryConfigurationSwapperUtil.marshal(expected).getRegistryCenterConfiguration();
+        assertThat(actual.getType(), is(expected.getRegistryCenter().getType()));
+        assertThat(actual.getServerLists(), is(expected.getRegistryCenter().getServerLists()));
+        assertThat(actual.getProps(), is(expected.getRegistryCenter().getProps()));
     }
     
-    private YamlCenterRepositoryConfiguration getYamlInstanceConfiguration() {
-        YamlCenterRepositoryConfiguration yamlConfiguration = new YamlCenterRepositoryConfiguration();
-        yamlConfiguration.setOrchestrationType(CenterType.REGISTRY_CENTER.getValue());
-        yamlConfiguration.setInstanceType("zookeeper");
-        yamlConfiguration.setNamespace("test");
-        yamlConfiguration.setServerLists("localhost:2181");
-        yamlConfiguration.setProps(new Properties());
-        return yamlConfiguration;
+    private YamlOrchestrationConfiguration createExpectedYamlOrchestrationConfiguration() {
+        YamlOrchestrationConfiguration result = new YamlOrchestrationConfiguration();
+        result.setName("test");
+        result.setRegistryCenter(createYamlOrchestrationRepositoryConfiguration());
+        return result;
+    }
+    
+    private YamlOrchestrationCenterConfiguration createYamlOrchestrationRepositoryConfiguration() {
+        YamlOrchestrationCenterConfiguration result = new YamlOrchestrationCenterConfiguration();
+        result.setType("ZooKeeper");
+        result.setServerLists("localhost:2181");
+        result.setProps(new Properties());
+        return result;
     }
 }

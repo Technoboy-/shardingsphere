@@ -18,9 +18,10 @@
 package org.apache.shardingsphere.orchestration.core.config.listener;
 
 import org.apache.shardingsphere.metrics.configuration.config.MetricsConfiguration;
-import org.apache.shardingsphere.orchestration.repository.api.ConfigCenterRepository;
-import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
 import org.apache.shardingsphere.orchestration.core.common.event.MetricsConfigurationChangedEvent;
+import org.apache.shardingsphere.orchestration.repository.api.ConfigurationRepository;
+import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
+import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
 public final class MetricsConfigurationChangedListenerTest {
@@ -40,23 +42,23 @@ public final class MetricsConfigurationChangedListenerTest {
             + "  port: 9190\n";
     
     @Mock
-    private ConfigCenterRepository configCenterRepository;
+    private ConfigurationRepository configurationRepository;
     
     private MetricsConfigurationChangedListener metricsConfigurationChangedListener;
     
     @Before
     public void setUp() {
-        metricsConfigurationChangedListener = new MetricsConfigurationChangedListener("test", configCenterRepository);
+        metricsConfigurationChangedListener = new MetricsConfigurationChangedListener("test", configurationRepository);
     }
     
     @Test
-    public void assertCreateShardingOrchestrationEvent() {
-        MetricsConfigurationChangedEvent event = metricsConfigurationChangedListener.createShardingOrchestrationEvent(new DataChangedEvent("test", METRICS_YAML, DataChangedEvent.ChangedType.UPDATED));
+    public void assertCreateOrchestrationEvent() {
+        MetricsConfigurationChangedEvent event = metricsConfigurationChangedListener.createOrchestrationEvent(new DataChangedEvent("test", METRICS_YAML, ChangedType.UPDATED));
         MetricsConfiguration actual = event.getMetricsConfiguration();
         assertThat(actual, notNullValue());
         assertThat(actual.getMetricsName(), is("prometheus"));
         assertThat(actual.getPort(), is(9190));
         assertThat(actual.getHost(), is("127.0.0.1"));
-        assertThat(actual.getAsync(), is(true));
+        assertTrue(actual.getAsync());
     }
 }

@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.orchestration.core.registry.listener;
 
 import org.apache.shardingsphere.orchestration.core.registry.RegistryCenterNodeStatus;
-import org.apache.shardingsphere.orchestration.repository.api.RegistryCenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.RegistryRepository;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.junit.Before;
@@ -36,21 +36,21 @@ public final class InstanceStateChangedListenerTest {
     private InstanceStateChangedListener instanceStateChangedListener;
     
     @Mock
-    private RegistryCenterRepository registryCenterRepository;
+    private RegistryRepository registryRepository;
     
     @Before
     public void setUp() {
-        instanceStateChangedListener = new InstanceStateChangedListener("test", registryCenterRepository);
+        instanceStateChangedListener = new InstanceStateChangedListener("test", registryRepository);
     }
     
     @Test
-    public void assertCreateShardingOrchestrationEventWhenEnabled() {
-        assertFalse(instanceStateChangedListener.createShardingOrchestrationEvent(new DataChangedEvent("test/test_ds", "", ChangedType.UPDATED)).isCircuitBreak());
+    public void assertCreateOrchestrationEventWhenEnabled() {
+        assertFalse(instanceStateChangedListener.createOrchestrationEvent(new DataChangedEvent("test/test_ds", "", ChangedType.UPDATED)).isCircuitBreak());
     }
     
     @Test
-    public void assertCreateShardingOrchestrationEventWhenDisabled() {
-        assertTrue(instanceStateChangedListener.createShardingOrchestrationEvent(new DataChangedEvent("test/test_ds",
+    public void assertCreateOrchestrationEventWhenDisabled() {
+        assertTrue(instanceStateChangedListener.createOrchestrationEvent(new DataChangedEvent("test/test_ds",
                 "state: " + RegistryCenterNodeStatus.DISABLED.name(), ChangedType.UPDATED)).isCircuitBreak());
     }
 }

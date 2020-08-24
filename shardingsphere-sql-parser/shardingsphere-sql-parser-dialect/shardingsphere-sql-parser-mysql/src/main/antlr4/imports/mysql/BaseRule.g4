@@ -381,6 +381,7 @@ simpleExpr
     | ROW? LP_ expr (COMMA_ expr)* RP_
     | EXISTS? subquery
     | LBE_ identifier expr RBE_
+    | identifier JSON_SEPARATOR STRING_
     | matchExpression_
     | caseExpression
     | intervalExpression
@@ -538,7 +539,11 @@ caseElse_
     ;
 
 intervalExpression
-    : INTERVAL expr intervalUnit_
+    : INTERVAL intervalValue
+    ;
+    
+intervalValue
+    : expr intervalUnit_
     ;
 
 intervalUnit_
@@ -548,7 +553,7 @@ intervalUnit_
     ;
 
 subquery
-    : 'Default does not match anything'
+    : 'refer subquery in DMStement.g4'
     ;
 
 orderByClause
@@ -612,4 +617,16 @@ pattern
 
 connectionId_
     : NUMBER_
+    ;
+    
+labelName
+    : identifier
+    ;
+    
+cursorName
+    : identifier
+    ;
+    
+conditionName
+    : identifier
     ;

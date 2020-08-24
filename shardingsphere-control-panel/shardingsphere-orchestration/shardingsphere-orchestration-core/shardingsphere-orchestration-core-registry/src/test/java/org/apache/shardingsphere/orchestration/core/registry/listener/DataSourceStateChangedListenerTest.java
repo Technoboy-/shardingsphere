@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.orchestration.core.registry.listener;
 
 import org.apache.shardingsphere.orchestration.core.registry.schema.OrchestrationSchema;
-import org.apache.shardingsphere.orchestration.repository.api.RegistryCenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.RegistryRepository;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.junit.Before;
@@ -36,17 +36,17 @@ public final class DataSourceStateChangedListenerTest {
     private DataSourceStateChangedListener dataSourceStateChangedListener;
     
     @Mock
-    private RegistryCenterRepository registryCenterRepository;
+    private RegistryRepository registryRepository;
     
     @Before
     public void setUp() {
-        dataSourceStateChangedListener = new DataSourceStateChangedListener("test", registryCenterRepository);
+        dataSourceStateChangedListener = new DataSourceStateChangedListener("test", registryRepository);
     }
     
     @Test
-    public void assertCreateShardingOrchestrationEvent() {
+    public void assertCreateOrchestrationEvent() {
         OrchestrationSchema expected = new OrchestrationSchema("master_slave_db", "slave_ds_0");
         DataChangedEvent dataChangedEvent = new DataChangedEvent("/test/registry/datasources/master_slave_db.slave_ds_0", "disabled", ChangedType.UPDATED);
-        assertThat(dataSourceStateChangedListener.createShardingOrchestrationEvent(dataChangedEvent).getOrchestrationSchema().getSchemaName(), is(expected.getSchemaName()));
+        assertThat(dataSourceStateChangedListener.createOrchestrationEvent(dataChangedEvent).getOrchestrationSchema().getSchemaName(), is(expected.getSchemaName()));
     }
 }

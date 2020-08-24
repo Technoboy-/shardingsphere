@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.orchestration.core.config.listener;
 
-import org.apache.shardingsphere.orchestration.repository.api.ConfigCenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.ConfigurationRepository;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
 import org.junit.Before;
@@ -38,16 +38,16 @@ public final class AuthenticationChangedListenerTest {
     private AuthenticationChangedListener authenticationChangedListener;
     
     @Mock
-    private ConfigCenterRepository configCenterRepository;
+    private ConfigurationRepository configurationRepository;
     
     @Before
     public void setUp() {
-        authenticationChangedListener = new AuthenticationChangedListener("test", configCenterRepository);
+        authenticationChangedListener = new AuthenticationChangedListener("test", configurationRepository);
     }
     
     @Test
-    public void assertCreateShardingOrchestrationEvent() {
-        assertThat(authenticationChangedListener.createShardingOrchestrationEvent(
+    public void assertCreateOrchestrationEvent() {
+        assertThat(authenticationChangedListener.createOrchestrationEvent(
                 new DataChangedEvent("test", AUTHENTICATION_YAML, ChangedType.UPDATED)).getAuthentication().getUsers().get("root1").getPassword(), is("root1"));
     }
 }

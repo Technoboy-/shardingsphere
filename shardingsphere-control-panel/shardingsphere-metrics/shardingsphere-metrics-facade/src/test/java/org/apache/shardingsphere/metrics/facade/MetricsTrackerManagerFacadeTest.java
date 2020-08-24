@@ -17,9 +17,7 @@
 
 package org.apache.shardingsphere.metrics.facade;
 
-import java.util.LinkedList;
-import java.util.List;
-import org.apache.shardingsphere.control.panel.spi.FacadeConfiguration;
+import org.apache.shardingsphere.control.panel.spi.ControlPanelConfiguration;
 import org.apache.shardingsphere.control.panel.spi.engine.ControlPanelFacadeEngine;
 import org.apache.shardingsphere.metrics.configuration.config.MetricsConfiguration;
 import org.apache.shardingsphere.metrics.facade.fixture.SecondMetricsTrackerManagerFixture;
@@ -29,24 +27,29 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
 public final class MetricsTrackerManagerFacadeTest {
     
     @Before
     public void setUp() {
-        MetricsConfiguration metricsConfiguration = new MetricsConfiguration("fixture", null, null, false, true, 8, null);
-        List<FacadeConfiguration> facadeConfigurations = new LinkedList<>();
-        facadeConfigurations.add(metricsConfiguration);
-        new ControlPanelFacadeEngine().init(facadeConfigurations);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration("fixture", null, 0, false, true, 8, null);
+        List<ControlPanelConfiguration> controlPanelConfigs = new LinkedList<>();
+        controlPanelConfigs.add(metricsConfiguration);
+        new ControlPanelFacadeEngine().init(controlPanelConfigs);
     }
     
     @Test
     public void assertInit() {
-        assertThat(MetricsTrackerManagerFacade.getEnabled(), is(true));
+        assertTrue(MetricsTrackerManagerFacade.getEnabled());
     }
     
     @Test
@@ -58,14 +61,14 @@ public final class MetricsTrackerManagerFacadeTest {
     @Test
     public void testClose() {
         MetricsTrackerManagerFacade.close();
-        assertThat(MetricsTrackerManagerFacade.getEnabled(), is(false));
+        assertFalse(MetricsTrackerManagerFacade.getEnabled());
     }
     
     @Test
     public void restart() {
-        MetricsConfiguration metricsConfiguration = new MetricsConfiguration("fixture", null, null, false, true, 8, null);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration("fixture", null, 0, false, true, 8, null);
         MetricsTrackerManagerFacade.restart(metricsConfiguration);
-        assertThat(MetricsTrackerManagerFacade.getEnabled(), is(true));
+        assertTrue(MetricsTrackerManagerFacade.getEnabled());
     }
     
     @After

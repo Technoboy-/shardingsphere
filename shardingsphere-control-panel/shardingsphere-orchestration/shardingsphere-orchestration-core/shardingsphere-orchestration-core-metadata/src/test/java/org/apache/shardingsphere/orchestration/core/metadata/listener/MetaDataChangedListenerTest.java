@@ -17,10 +17,11 @@
 
 package org.apache.shardingsphere.orchestration.core.metadata.listener;
 
+import org.apache.shardingsphere.orchestration.core.metadata.MetaDataJson;
 import org.apache.shardingsphere.orchestration.core.metadata.event.MetaDataChangedEvent;
-import org.apache.shardingsphere.orchestration.repository.api.CenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.OrchestrationRepository;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
-import org.apache.shardingsphere.orchestration.core.metadata.MetaDataTest;
+import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent.ChangedType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -36,17 +37,17 @@ public final class MetaDataChangedListenerTest {
     private MetaDataChangedListener metaDataChangedListener;
     
     @Mock
-    private CenterRepository centerRepository;
+    private OrchestrationRepository orchestrationRepository;
     
     @Before
     public void setUp() {
-        metaDataChangedListener = new MetaDataChangedListener("test", centerRepository, Collections.singleton("schema"));
+        metaDataChangedListener = new MetaDataChangedListener("test", orchestrationRepository, Collections.singleton("schema"));
     }
     
     @Test
-    public void createShardingOrchestrationEvent() {
-        DataChangedEvent event = new DataChangedEvent("/test/metadata/schema", MetaDataTest.META_DATA, DataChangedEvent.ChangedType.UPDATED);
-        MetaDataChangedEvent metaDataChangedEvent = (MetaDataChangedEvent) metaDataChangedListener.createShardingOrchestrationEvent(event);
+    public void createOrchestrationEvent() {
+        DataChangedEvent event = new DataChangedEvent("/test/metadata/schema", MetaDataJson.META_DATA, ChangedType.UPDATED);
+        MetaDataChangedEvent metaDataChangedEvent = (MetaDataChangedEvent) metaDataChangedListener.createOrchestrationEvent(event);
         assertNotNull(metaDataChangedEvent);
         assertThat(metaDataChangedEvent.getSchemaNames(), is(Collections.singleton("schema")));
     }

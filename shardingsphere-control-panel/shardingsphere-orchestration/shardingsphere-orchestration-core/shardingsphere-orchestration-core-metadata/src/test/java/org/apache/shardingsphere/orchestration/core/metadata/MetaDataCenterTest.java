@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.orchestration.core.metadata;
 
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.YamlRuleSchemaMetaData;
-import org.apache.shardingsphere.orchestration.repository.api.CenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.OrchestrationRepository;
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.RuleSchemaMetaDataYamlSwapper;
 import org.apache.shardingsphere.infra.metadata.schema.RuleSchemaMetaData;
 import org.apache.shardingsphere.infra.yaml.engine.YamlEngine;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 public final class MetaDataCenterTest {
     
     @Mock
-    private CenterRepository repository;
+    private OrchestrationRepository repository;
     
     private MetaDataCenter metaDataCenter;
     
@@ -55,19 +55,18 @@ public final class MetaDataCenterTest {
     
     @Test
     public void assertPersistMetaDataCenterNode() {
-        RuleSchemaMetaData ruleSchemaMetaData = new RuleSchemaMetaDataYamlSwapper().swapToObject(YamlEngine.unmarshal(MetaDataTest.META_DATA, YamlRuleSchemaMetaData.class));
+        RuleSchemaMetaData ruleSchemaMetaData = new RuleSchemaMetaDataYamlSwapper().swapToObject(YamlEngine.unmarshal(MetaDataJson.META_DATA, YamlRuleSchemaMetaData.class));
         metaDataCenter.persistMetaDataCenterNode("schema", ruleSchemaMetaData);
         verify(repository).persist(eq("/test/metadata/schema"), anyString());
     }
     
     @Test
     public void assertLoadRuleSchemaMetaData() {
-        when(repository.get("/test/metadata/schema")).thenReturn(MetaDataTest.META_DATA);
+        when(repository.get("/test/metadata/schema")).thenReturn(MetaDataJson.META_DATA);
         Optional<RuleSchemaMetaData> optionalRuleSchemaMetaData = metaDataCenter.loadRuleSchemaMetaData("schema");
-        assertThat(optionalRuleSchemaMetaData.isPresent(), is(true));
+        assertTrue(optionalRuleSchemaMetaData.isPresent());
         Optional<RuleSchemaMetaData> empty = metaDataCenter.loadRuleSchemaMetaData("test");
         assertThat(empty, is(Optional.empty()));
-        assertTrue(optionalRuleSchemaMetaData.isPresent());
         RuleSchemaMetaData ruleSchemaMetaData = optionalRuleSchemaMetaData.get();
         verify(repository).get(eq("/test/metadata/schema"));
         assertNotNull(ruleSchemaMetaData);

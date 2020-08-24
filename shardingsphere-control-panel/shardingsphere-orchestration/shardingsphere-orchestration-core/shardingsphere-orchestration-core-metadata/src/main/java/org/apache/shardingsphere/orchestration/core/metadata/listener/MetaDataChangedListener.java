@@ -18,10 +18,10 @@
 package org.apache.shardingsphere.orchestration.core.metadata.listener;
 
 import org.apache.shardingsphere.orchestration.core.metadata.event.MetaDataChangedEvent;
-import org.apache.shardingsphere.orchestration.repository.api.CenterRepository;
+import org.apache.shardingsphere.orchestration.repository.api.OrchestrationRepository;
 import org.apache.shardingsphere.orchestration.repository.api.listener.DataChangedEvent;
-import org.apache.shardingsphere.orchestration.core.common.event.ShardingOrchestrationEvent;
-import org.apache.shardingsphere.orchestration.core.common.listener.PostShardingCenterRepositoryEventListener;
+import org.apache.shardingsphere.orchestration.core.common.event.OrchestrationEvent;
+import org.apache.shardingsphere.orchestration.core.common.listener.PostOrchestrationRepositoryEventListener;
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.RuleSchemaMetaDataYamlSwapper;
 import org.apache.shardingsphere.orchestration.core.metadata.MetaDataCenterNode;
 import org.apache.shardingsphere.orchestration.core.metadata.yaml.YamlRuleSchemaMetaData;
@@ -33,17 +33,17 @@ import java.util.Collection;
 /**
  * Meta data changed listener.
  */
-public final class MetaDataChangedListener extends PostShardingCenterRepositoryEventListener {
-
+public final class MetaDataChangedListener extends PostOrchestrationRepositoryEventListener {
+    
     private final Collection<String> schemaNames;
-
-    public MetaDataChangedListener(final String name, final CenterRepository centerRepository, final Collection<String> shardingSchemaNames) {
-        super(centerRepository, new MetaDataCenterNode(name).getAllSchemaMetadataPaths(shardingSchemaNames));
-        this.schemaNames = shardingSchemaNames;
+    
+    public MetaDataChangedListener(final String name, final OrchestrationRepository orchestrationRepository, final Collection<String> schemaNames) {
+        super(orchestrationRepository, new MetaDataCenterNode(name).getAllSchemaMetadataPaths(schemaNames));
+        this.schemaNames = schemaNames;
     }
-
+    
     @Override
-    protected ShardingOrchestrationEvent createShardingOrchestrationEvent(final DataChangedEvent event) {
+    protected OrchestrationEvent createOrchestrationEvent(final DataChangedEvent event) {
         RuleSchemaMetaData ruleSchemaMetaData = new RuleSchemaMetaDataYamlSwapper().swapToObject(YamlEngine.unmarshal(event.getValue(), YamlRuleSchemaMetaData.class));
         return new MetaDataChangedEvent(schemaNames, ruleSchemaMetaData);
     }

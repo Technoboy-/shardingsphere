@@ -24,7 +24,7 @@ import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
 import io.opentracing.util.ThreadLocalActiveSpanSource;
 import lombok.SneakyThrows;
-import org.apache.shardingsphere.opentracing.ShardingTracer;
+import org.apache.shardingsphere.opentracing.OpenTracingTracer;
 import org.apache.shardingsphere.opentracing.constant.ShardingErrorLogTags;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -43,7 +43,7 @@ public abstract class BaseOpenTracingHookTest {
     
     @BeforeClass
     public static void initTracer() {
-        ShardingTracer.init(TRACER);
+        OpenTracingTracer.init(TRACER);
     }
     
     @AfterClass
@@ -55,7 +55,7 @@ public abstract class BaseOpenTracingHookTest {
     }
     
     @Before
-    public void resetTracer() {
+    public final void resetTracer() {
         TRACER.reset();
     }
     
@@ -66,7 +66,7 @@ public abstract class BaseOpenTracingHookTest {
     }
     
     protected final void assertSpanError(final Class<? extends Throwable> expectedException, final String expectedErrorMessage) {
-        final MockSpan actual = getActualSpan();
+        MockSpan actual = getActualSpan();
         assertTrue((Boolean) actual.tags().get(Tags.ERROR.getKey()));
         List<MockSpan.LogEntry> actualLogEntries = actual.logEntries();
         assertThat(actualLogEntries.size(), is(1));

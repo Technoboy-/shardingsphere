@@ -21,9 +21,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.shardingsphere.cluster.configuration.yaml.YamlClusterConfiguration;
 import org.apache.shardingsphere.infra.yaml.config.YamlRootRuleConfigurations;
-import org.apache.shardingsphere.orchestration.repository.common.configuration.config.YamlCenterRepositoryConfiguration;
-
-import java.util.Map;
+import org.apache.shardingsphere.metrics.configuration.yaml.YamlMetricsConfiguration;
+import org.apache.shardingsphere.orchestration.core.common.yaml.config.YamlOrchestrationConfiguration;
 
 /**
  * YAML root rule configurations for orchestration.
@@ -32,7 +31,9 @@ import java.util.Map;
 @Setter
 public final class YamlOrchestrationRootRuleConfigurations extends YamlRootRuleConfigurations {
     
-    private Map<String, YamlCenterRepositoryConfiguration> orchestration;
+    private YamlOrchestrationConfiguration orchestration;
     
     private YamlClusterConfiguration cluster;
+    
+    private YamlMetricsConfiguration metrics;
 }

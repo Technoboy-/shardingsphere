@@ -28,8 +28,10 @@ import org.apache.shardingsphere.db.protocol.mysql.payload.MySQLPacketPayload;
 import org.apache.shardingsphere.infra.auth.Authentication;
 import org.apache.shardingsphere.infra.auth.ProxyUser;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationProperties;
+import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
 import org.apache.shardingsphere.kernel.context.SchemaContext;
 import org.apache.shardingsphere.kernel.context.SchemaContexts;
+import org.apache.shardingsphere.kernel.context.StandardSchemaContexts;
 import org.apache.shardingsphere.kernel.context.runtime.RuntimeContext;
 import org.apache.shardingsphere.kernel.context.schema.ShardingSphereSchema;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.connection.BackendConnection;
@@ -41,7 +43,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.lang.reflect.Field;
@@ -53,6 +54,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -89,7 +91,7 @@ public final class MySQLProtocolFrontendEngineTest {
     
     @Test
     public void assertHandshake() {
-        mysqlProtocolFrontendEngine.getAuthEngine().handshake(context, mock(BackendConnection.class));
+        assertTrue(mysqlProtocolFrontendEngine.getAuthEngine().handshake(context) > 0);
         verify(context).writeAndFlush(isA(MySQLHandshakePacket.class));
     }
     
@@ -127,8 +129,8 @@ public final class MySQLProtocolFrontendEngineTest {
         when(context.channel()).thenReturn(channel);
         when(channel.remoteAddress()).thenReturn(new InetSocketAddress(InetAddress.getByAddress(new byte[] {(byte) 192, (byte) 168, (byte) 0, (byte) 102}), 3307));
         assertTrue(mysqlProtocolFrontendEngine.getAuthEngine().auth(context, payload, mock(BackendConnection.class)));
-        verify(context).writeAndFlush(Mockito.argThat(
-                (ArgumentMatcher<MySQLErrPacket>) argument -> argument.getErrorMessage().equals("Access denied for user 'root'@'192.168.0.102' (using password: YES)")));
+        verify(context).writeAndFlush(argThat(
+                (ArgumentMatcher<MySQLErrPacket>) argument -> "Access denied for user 'root'@'192.168.0.102' (using password: YES)".equals(argument.getErrorMessage())));
     }
     
     @SneakyThrows
@@ -153,11 +155,12 @@ public final class MySQLProtocolFrontendEngineTest {
     }
     
     private SchemaContexts getSchemaContexts(final Authentication authentication) {
-        return new SchemaContexts(getSchemaContextMap(), new ConfigurationProperties(new Properties()), authentication);
+        return new StandardSchemaContexts(getSchemaContextMap(), authentication,
+                new ConfigurationProperties(new Properties()), new MySQLDatabaseType());
     }
     
     private Map<String, SchemaContext> getSchemaContextMap() {
-        Map<String, SchemaContext> result = new HashMap<>();
+        Map<String, SchemaContext> result = new HashMap<>(10, 1);
         for (int i = 0; i < 10; i++) {
             String name = SCHEMA + i;
             ShardingSphereSchema schema = mock(ShardingSphereSchema.class);

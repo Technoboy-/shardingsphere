@@ -19,10 +19,11 @@ package org.apache.shardingsphere.metrics.configuration.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Properties;
-import org.apache.shardingsphere.control.panel.spi.FacadeConfiguration;
+import org.apache.shardingsphere.control.panel.spi.ControlPanelConfiguration;
 
 /**
  * Metrics configuration.
@@ -30,21 +31,22 @@ import org.apache.shardingsphere.control.panel.spi.FacadeConfiguration;
 @Getter
 @Setter
 @AllArgsConstructor
-public final class MetricsConfiguration implements FacadeConfiguration {
+@NoArgsConstructor
+public final class MetricsConfiguration implements ControlPanelConfiguration {
     
-    public static final Integer DEFAULT_PORT = 9190;
+    public static final int DEFAULT_PORT = 9190;
     
     private String metricsName;
     
     private String host;
     
-    private Integer port;
+    private int port;
     
     private Boolean async;
     
     private Boolean enable;
     
-    private Integer threadCount;
+    private int threadCount;
     
     private Properties props;
 }

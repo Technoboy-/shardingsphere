@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.shardingsphere.orchestration.core.registry.schema.OrchestrationSchema;
 
 /**
- * RegistryCenter node.
+ * Registry center node.
  */
 @RequiredArgsConstructor
 public final class RegistryCenterNode {
@@ -43,15 +43,6 @@ public final class RegistryCenterNode {
      */
     public String getInstancesNodeFullPath(final String instanceId) {
         return Joiner.on("/").join("", name, ROOT, INSTANCES_NODE_PATH, instanceId);
-    }
-    
-    /**
-     * Get instance node root path.
-     *
-     * @return instance node root path
-     */
-    public String getInstanceNodeRootPath() {
-        return Joiner.on("/").join("", name, ROOT, INSTANCES_NODE_PATH);
     }
     
     /**

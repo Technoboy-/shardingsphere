@@ -22,6 +22,7 @@ import org.apache.shardingsphere.infra.config.DataSourceConfiguration;
 import org.apache.shardingsphere.kernel.context.SchemaContext;
 import org.apache.shardingsphere.kernel.context.SchemaContexts;
 import org.apache.shardingsphere.kernel.context.schema.DataSourceParameter;
+import org.apache.shardingsphere.orchestration.core.facade.OrchestrationFacade;
 import org.apache.shardingsphere.orchestration.core.schema.OrchestrationSchemaContexts;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.datasource.JDBCBackendDataSourceFactory;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.datasource.JDBCRawBackendDataSourceFactory;
@@ -33,64 +34,62 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Proxy control panel subscriber.
- * 
+ * Proxy orchestration schema contexts.
  */
 public final class ProxyOrchestrationSchemaContexts extends OrchestrationSchemaContexts {
     
     private final JDBCBackendDataSourceFactory backendDataSourceFactory;
     
-    public ProxyOrchestrationSchemaContexts(final SchemaContexts schemaContexts) {
-        super(schemaContexts);
+    public ProxyOrchestrationSchemaContexts(final SchemaContexts schemaContexts, final OrchestrationFacade orchestrationFacade) {
+        super(schemaContexts, orchestrationFacade);
         backendDataSourceFactory = JDBCRawBackendDataSourceFactory.getInstance();
     }
     
     @Override
-    public Map<String, DataSource> getAddedDataSources(final SchemaContext oldSchemaContext, final Map<String, DataSourceConfiguration> newDataSources) throws Exception {
-        Map<String, DataSourceParameter> newDataSourceParameters = DataSourceConverter.getDataSourceParameterMap(newDataSources);
-        Map<String, DataSourceParameter> parameters = 
-                Maps.filterEntries(newDataSourceParameters, input -> !oldSchemaContext.getSchema().getDataSourceParameters().containsKey(input.getKey()));
-        return createDataSources(parameters);
+    protected Map<String, DataSource> getAddedDataSources(final SchemaContext oldSchemaContext, final Map<String, DataSourceConfiguration> newDataSources) throws Exception {
+        Map<String, DataSourceConfiguration> newDataSourceConfigs = Maps.filterKeys(newDataSources, each -> !oldSchemaContext.getSchema().getDataSources().containsKey(each));
+        return createDataSources(DataSourceConverter.getDataSourceParameterMap(newDataSourceConfigs));
     }
     
     @Override
-    public Map<String, DataSource> getModifiedDataSources(final SchemaContext oldSchemaContext, final Map<String, DataSourceConfiguration> newDataSources) throws Exception {
+    protected Map<String, DataSource> getModifiedDataSources(final SchemaContext oldSchemaContext, final Map<String, DataSourceConfiguration> newDataSources) throws Exception {
         Map<String, DataSourceParameter> newDataSourceParameters = DataSourceConverter.getDataSourceParameterMap(newDataSources);
-        Map<String, DataSourceParameter> parameters = new LinkedHashMap<>();
+        Map<String, DataSourceParameter> parameters = new LinkedHashMap<>(newDataSourceParameters.size(), 1);
         for (Entry<String, DataSourceParameter> entry : newDataSourceParameters.entrySet()) {
-            if (isModifiedDataSource(oldSchemaContext.getSchema().getDataSourceParameters(), entry)) {
+            if (isModifiedDataSource(oldSchemaContext.getSchema().getDataSources(), entry.getKey(), entry.getValue())) {
                 parameters.put(entry.getKey(), entry.getValue());
             }
         }
         return createDataSources(parameters);
     }
     
-    private synchronized boolean isModifiedDataSource(final Map<String, DataSourceParameter> oldDataSourceParameters, final Entry<String, DataSourceParameter> target) {
-        return oldDataSourceParameters.containsKey(target.getKey()) && !oldDataSourceParameters.get(target.getKey()).equals(target.getValue());
+    private synchronized boolean isModifiedDataSource(final Map<String, DataSource> oldDataSources, final String newDataSourceName, final DataSourceParameter newDataSourceParameter) {
+        return oldDataSources.containsKey(newDataSourceName) && !DataSourceConverter.getDataSourceParameter(oldDataSources.get(newDataSourceName)).equals(newDataSourceParameter);
     }
     
     @Override
-    public Map<String, Map<String, DataSource>> createDataSourcesMap(final Map<String, Map<String, DataSourceConfiguration>> dataSourcesMap) throws Exception {
-        Map<String, Map<String, DataSource>> result = new LinkedHashMap<>();
-        for (Entry<String, Map<String, DataSourceParameter>> entry : createDataSourceParametersMap(dataSourcesMap).entrySet()) {
+    protected Map<String, Map<String, DataSource>> createDataSourcesMap(final Map<String, Map<String, DataSourceConfiguration>> dataSourcesMap) throws Exception {
+        Map<String, Map<String, DataSourceParameter>> dataSourceParametersMap = createDataSourceParametersMap(dataSourcesMap);
+        Map<String, Map<String, DataSource>> result = new LinkedHashMap<>(dataSourceParametersMap.size(), 1);
+        for (Entry<String, Map<String, DataSourceParameter>> entry : dataSourceParametersMap.entrySet()) {
             result.put(entry.getKey(), createDataSources(entry.getValue()));
         }
         return result;
     }
     
-    @Override
-    public Map<String, Map<String, DataSourceParameter>> createDataSourceParametersMap(final Map<String, Map<String, DataSourceConfiguration>> dataSourcesMap) {
-        Map<String, Map<String, DataSourceParameter>> result = new LinkedHashMap<>();
-        for (Entry<String, Map<String, DataSourceConfiguration>> entry : dataSourcesMap.entrySet()) {
-            result.put(entry.getKey(), DataSourceConverter.getDataSourceParameterMap(entry.getValue()));
+    private Map<String, DataSource> createDataSources(final Map<String, DataSourceParameter> dataSourceParameters) throws Exception {
+        Map<String, DataSource> result = new LinkedHashMap<>(dataSourceParameters.size(), 1);
+        for (Entry<String, DataSourceParameter> entry: dataSourceParameters.entrySet()) {
+            result.put(entry.getKey(), backendDataSourceFactory.build(entry.getKey(), entry.getValue()));
         }
         return result;
     }
     
-    private Map<String, DataSource> createDataSources(final Map<String, DataSourceParameter> parameters) throws Exception {
-        Map<String, DataSource> result = new LinkedHashMap<>();
-        for (Entry<String, DataSourceParameter> entry: parameters.entrySet()) {
-            result.put(entry.getKey(), backendDataSourceFactory.build(entry.getKey(), entry.getValue()));
+    @Override
+    public Map<String, Map<String, DataSourceParameter>> createDataSourceParametersMap(final Map<String, Map<String, DataSourceConfiguration>> dataSources) {
+        Map<String, Map<String, DataSourceParameter>> result = new LinkedHashMap<>(dataSources.size(), 1);
+        for (Entry<String, Map<String, DataSourceConfiguration>> entry : dataSources.entrySet()) {
+            result.put(entry.getKey(), DataSourceConverter.getDataSourceParameterMap(entry.getValue()));
         }
         return result;
     }
